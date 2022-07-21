@@ -37,15 +37,15 @@ public class Percolation {
         this.validateIndex(row);
         this.validateIndex(col);
 
-        // marks the site open
+        // marks the site open if not
         int index = this.xyTo1D(row, col);
-        this.opened[index] = true;
-
-        // connects to open neighbours
-        this.connectOpenNeighbours(row, col);
-
-        // increments the count of open sites
-        this.openCount++;
+        if (!this.opened[index]) {
+            this.opened[index] = true;
+            // increments the count of open sites
+            this.openCount++;
+            // connects to open neighbours
+            this.connectOpenNeighbours(row, col);
+        }
     }
 
     // is the site (row, col) open?

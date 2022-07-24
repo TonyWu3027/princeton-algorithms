@@ -8,10 +8,15 @@ public class Percolation {
     // The index of the virtual top site, always 0
     private static final int virtualTop = 0;
 
-    // An UF marking the connections between sites
+    // An UF marking the connections between sites,
     // with connectionGrid[0] being the virtual top site
-    // and connectionGrid[n^2+1] being the virtual botoom site
+    // and connectionGrid[n^2+1] being the virtual bottom site
     private final WeightedQuickUnionUF connectionGrid;
+
+    // An UF marking the fullness of sites used by the UI to avoid backwash,
+    // with fullnessGrid[0] being the virtual top site.
+    // A site is full when it is connected to the virtual top site.
+    private final WeightedQuickUnionUF fullnessGrid;
 
     // The index of the virtual bottom site
     private final int virtualBottom;
@@ -20,7 +25,7 @@ public class Percolation {
     private final int n;
 
     // The open status of the sites,
-    // site i is open if openStatus[i] is true
+    // site `i` is open if openStatus[i] is true
     private boolean[] openStatus;
 
     // The number of open sites
@@ -39,9 +44,14 @@ public class Percolation {
         this.virtualBottom = n*n + 1;
         this.openStatus = new boolean[n*n+1];
         this.connectionGrid = new WeightedQuickUnionUF(n*n+2);
+        this.fullnessGrid = new WeightedQuickUnionUF(n*n+1);
     }
 
-    // opens the site (row, col) if it is not open already
+    /**
+     * Opens the site (row, col) if it is not open already
+     * @param row the row co-ordinate
+     * @param col the column co-ordinate
+     */
     public void open(int row, int col) {
         validateIndex(row);
         validateIndex(col);
@@ -56,7 +66,7 @@ public class Percolation {
         this.openCount++;
 
         // connects to the virtual top site if the site is in the first row
-        if (row == 1) this.connectionGrid.union(this.virtualTop, site);
+        if (row == 1) this.connectNeighbour(site, virtualTop);
 
         // connects to the virtual bottom site if the site is in the last row
         if (row == this.n) this.connectionGrid.union(this.virtualBottom, site);
@@ -66,25 +76,25 @@ public class Percolation {
         // if there is an open site to the right (row, col+1)
         if (col < this.n && this.isOpen(row, col+1)) {
             int right = this.xyTo1D(row, col+1);
-            this.connectionGrid.union(site, right);
+            this.connectNeighbour(site, right);
         }
 
         // if there is an open site to the left (row, col-1)
         if (col > 1 && this.isOpen(row, col-1)) {
             int left = this.xyTo1D(row, col-1);
-            this.connectionGrid.union(site, left);
+            this.connectNeighbour(site, left);
         }
 
         // if there is an open site above (row-1, col)
         if (row > 1 && this.isOpen(row-1, col)) {
             int above = this.xyTo1D(row-1, col);
-            this.connectionGrid.union(site, above);
+            this.connectNeighbour(site, above);
         }
 
         // if there is an open site below (row+1, col)
         if (row < this.n && this.isOpen(row+1, col)) {
             int below = this.xyTo1D(row+1, col);
-            this.connectionGrid.union(site, below);
+            this.connectNeighbour(site, below);
         }
 
     }
@@ -114,7 +124,7 @@ public class Percolation {
 
         int site = this.xyTo1D(row, col);
 
-        return this.connectionGrid.find(this.virtualTop) == this.connectionGrid.find(site);
+        return this.fullnessGrid.find(virtualTop) == this.fullnessGrid.find(site);
     }
 
     /**
@@ -131,7 +141,7 @@ public class Percolation {
      */
     public boolean percolates() {
         // the system percolates if the virtual top site is connected to the virtual bottom site
-        return this.connectionGrid.find(this.virtualTop) == this.connectionGrid.find(this.virtualBottom);
+        return this.connectionGrid.find(virtualTop) == this.connectionGrid.find(this.virtualBottom);
     }
 
     /**
@@ -155,6 +165,16 @@ public class Percolation {
             String msg = String.format("Index should be between 1 and %d, but %d is found", this.n, index);
             throw new IllegalArgumentException(msg);
         }
+    }
+
+    /**
+     * Connects a site to an open neighbour in both connectionGrid and fullnessGrid
+     * @param site the 1D index of the site
+     * @param neighbour the 1D index of the neighbouring open site
+     */
+    private void connectNeighbour(int site, int neighbour) {
+        this.connectionGrid.union(site, neighbour);
+        this.fullnessGrid.union(site, neighbour);
     }
 
     // test client (optional)

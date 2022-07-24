@@ -1,150 +1,176 @@
+import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.StdRandom;
+import edu.princeton.cs.algs4.Stopwatch;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 public class Percolation {
 
-    // an UF with the site 0 being the top (virtual) node
-    // and site n+1 being the bottom (virtual) node
-    private WeightedQuickUnionUF connected;
+    // The index of the virtual top site, always 0
+    private static final int virtualTop = 0;
 
-    // size of the grid
-    private int n;
+    // An UF marking the connections between sites
+    // with connectionGrid[0] being the virtual top site
+    // and connectionGrid[n^2+1] being the virtual botoom site
+    private final WeightedQuickUnionUF connectionGrid;
 
-    // a list of opened sites
-    private boolean[] opened;
+    // The index of the virtual bottom site
+    private final int virtualBottom;
 
-    // number of open sites
-    private int openCount;
+    // The length of the side (size) of the grid
+    private final int n;
+
+    // The open status of the sites,
+    // site i is open if openStatus[i] is true
+    private boolean[] openStatus;
+
+    // The number of open sites
+    private int openCount = 0;
 
     // creates n-by-n grid, with all sites initially blocked
     public Percolation(int n) {
-        // validates n>0
-        if (n <= 0) throw new IllegalArgumentException("n should be >0");
-
-        // initialises instance variables
-        this.n = n;
-        this.connected = new WeightedQuickUnionUF(n*n+2);
-        this.opened = new boolean[n*n+1];
-
-        // connects the first row with the top node
-        for (int i = 1; i <= n; i++) {
-            this.connected.union(i, 0);
+        // validates argument n
+        if (n <= 0) {
+            String msg = String.format("n should be <= 0, but %d found", n);
+            throw new IllegalArgumentException(msg);
         }
+
+        // initialises the instance variables
+        this.n = n;
+        this.virtualBottom = n*n + 1;
+        this.openStatus = new boolean[n*n+1];
+        this.connectionGrid = new WeightedQuickUnionUF(n*n+2);
     }
 
     // opens the site (row, col) if it is not open already
     public void open(int row, int col) {
-        // validates indices
-        this.validateIndex(row);
-        this.validateIndex(col);
+        validateIndex(row);
+        validateIndex(col);
 
-        // marks the site open if not
-        int index = this.xyTo1D(row, col);
-        if (!this.opened[index]) {
-            this.opened[index] = true;
-            // increments the count of open sites
-            this.openCount++;
-            // connects to open neighbours
-            this.connectOpenNeighbours(row, col);
+        int site = this.xyTo1D(row, col);
+
+        // skips if the site is already open
+        if (this.openStatus[site]) return;
+
+        // opens the site and increments counter
+        this.openStatus[site] = true;
+        this.openCount++;
+
+        // connects to the virtual top site if the site is in the first row
+        if (row == 1) this.connectionGrid.union(this.virtualTop, site);
+
+        // connects to the virtual bottom site if the site is in the last row
+        if (row == this.n) this.connectionGrid.union(this.virtualBottom, site);
+
+        /* connects to neighbouring open sites */
+
+        // if there is an open site to the right (row, col+1)
+        if (col < this.n && this.isOpen(row, col+1)) {
+            int right = this.xyTo1D(row, col+1);
+            this.connectionGrid.union(site, right);
         }
+
+        // if there is an open site to the left (row, col-1)
+        if (col > 1 && this.isOpen(row, col-1)) {
+            int left = this.xyTo1D(row, col-1);
+            this.connectionGrid.union(site, left);
+        }
+
+        // if there is an open site above (row-1, col)
+        if (row > 1 && this.isOpen(row-1, col)) {
+            int above = this.xyTo1D(row-1, col);
+            this.connectionGrid.union(site, above);
+        }
+
+        // if there is an open site below (row+1, col)
+        if (row < this.n && this.isOpen(row+1, col)) {
+            int below = this.xyTo1D(row+1, col);
+            this.connectionGrid.union(site, below);
+        }
+
     }
 
-    // is the site (row, col) open?
+    /**
+     * Is the site (row, col) open?
+     * @param row the row co-ordinate
+     * @param col the column co-ordinate
+     * @return true if open, vice versa
+     */
     public boolean isOpen(int row, int col) {
-        // validates indices
-        this.validateIndex(row);
-        this.validateIndex(col);
+        validateIndex(row);
+        validateIndex(col);
 
-        // checks if the site is open or not
-        int index = this.xyTo1D(row, col);
-        return this.opened[index];
+        return this.openStatus[this.xyTo1D(row, col)];
     }
 
-    // is the site (row, col) full?
+    /**
+     * Is the site (row, col) full?
+     * @param row the row co-ordinate
+     * @param col the column co-ordinate
+     * @return true if full, vice versa
+     */
     public boolean isFull(int row, int col) {
-        // validates indices
-        this.validateIndex(row);
-        this.validateIndex(col);
+        validateIndex(row);
+        validateIndex(col);
 
-        // checks if the site is connected to the top site or not.
-        // if so, it is full. Vice versa
-        int index = this.xyTo1D(row, col);
-        return this.connected.find(index) == this.connected.find(0) && this.isOpen(row, col);
+        int site = this.xyTo1D(row, col);
+
+        return this.connectionGrid.find(this.virtualTop) == this.connectionGrid.find(site);
     }
 
-    // returns the number of open sites
+    /**
+     * Returns the number of open sites
+     * @return the number of open sites
+     */
     public int numberOfOpenSites() {
         return this.openCount;
     }
 
-    // does the system percolate?
+    /**
+     * Does the system percolate?
+     * @return true if the system percolates, vice versa
+     */
     public boolean percolates() {
-        return this.connected.find(0) == this.connected.find(this.n*this.n+1);
+        // the system percolates if the virtual top site is connected to the virtual bottom site
+        return this.connectionGrid.find(this.virtualTop) == this.connectionGrid.find(this.virtualBottom);
     }
 
-    // maps the coordinate indices to an 1D index
+    /**
+     * Maps the (row, col) grid co-ordinates to an 1D index in range [1, n^2]
+     * @param row the row co-ordinate
+     * @param col the column co-ordinate
+     * @return an 1D index in range [1, n^2]
+     */
     private int xyTo1D(int row, int col) {
-        return this.n*(row-1) + col;
+        return (row-1)*this.n + col;
     }
 
-    // validates whether a col or row is within prescribed range or not
-    private void validateIndex(int i) {
-        String msg = String.format("Index out of bound %d", i);
-        if (i <= 0 || i > this.n) throw new IllegalArgumentException(msg);
-    }
-
-    // connects a site to its open neighbours
-    private void connectOpenNeighbours(int row, int col) {
-        int centre = this.xyTo1D(row, col);
-        int up = this.xyTo1D(row-1, col);
-        int down = this.xyTo1D(row+1, col);
-        int left = this.xyTo1D(row, col-1);
-        int right = this.xyTo1D(row, col+1);
-
-        if (col == 1) {
-            // connects to right neighbour if the right is open
-            if (this.isOpen(row, col+1)) this.connected.union(centre, right);
-        } else if (col == this.n) {
-            // connects to left neighbour if the left is open
-            if (this.isOpen(row, col-1)) this.connected.union(centre, left);
-        } else {
-            // connects to left/right  neighbour if the left/right is open
-            if (this.isOpen(row, col+1)) this.connected.union(centre, right);
-            if (this.isOpen(row, col-1)) this.connected.union(centre, left);
+    /**
+     * Validates if an index lies in range [1, n],
+     * throw an <code>IllegalArgumentException</code> if not
+     * @param index a row/col index
+     * @throws IllegalArgumentException if an index is outside [1, n]
+     */
+    private void validateIndex(int index) {
+        if (index < 1 || index > this.n) {
+            String msg = String.format("Index should be between 1 and %d, but %d is found", this.n, index);
+            throw new IllegalArgumentException(msg);
         }
-
-        if (row == 1) {
-            // connects to down neighbour if the down is open
-            if (this.isOpen(row+1, col)) this.connected.union(centre, down);
-        } else if (row == this.n) {
-            // connects to up neighbour if the up is open
-            if (this.isOpen(row-1, col)) this.connected.union(centre, up);
-        } else {
-            // connects to up/down  neighbour if the up/down is open
-            if (this.isOpen(row+1, col)) this.connected.union(centre, down);
-            if (this.isOpen(row-1, col)) this.connected.union(centre, up);
-        }
-
-        // Special treatment to prevent backwash
-        // connects a site in the last row to the bottom node
-        // ONLY if it has a neighbour(s) (up, left, right) that is connected to the top node
-        if (row == this.n) {
-            if (col == 1) {
-                // bottom-left
-                if (this.isFull(row-1, col) || this.isFull(row, col+1)) this.connected.union(centre, this.n*this.n+1);
-            } else if (col == this.n) {
-                // bottom-right
-                if (this.isFull(row-1, col) || this.isFull(row, col-1)) this.connected.union(centre, this.n*this.n+1);
-            } else {
-                // any other bottom sites
-                if (this.isFull(row - 1, col) || this.isFull(row, col - 1) || this.isFull(row, col
-                        + 1)) {
-                    this.connected.union(centre, this.n * this.n + 1);
-                }
-            }
-        }
-
     }
 
     // test client (optional)
-    public static void main(String[] args) { }
+    public static void main(String[] args) {
+        // recreating Timing Test 3
+        int n = 4096;
+        Stopwatch sw = new Stopwatch();
+
+        Percolation perc = new Percolation(n);
+        while (!perc.percolates()) {
+            int row = StdRandom.uniform(1, n+1);
+            int col = StdRandom.uniform(1, n+1);
+            perc.open(row, col);
+        }
+
+        double time = sw.elapsedTime();
+        StdOut.printf("n = %d, seconds = %f", n, time);
+    }
 }

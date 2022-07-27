@@ -1,0 +1,9 @@
+# Ignore everything
+/*
+
+# Except for the project code, Makefile, and gitignore itself
+!/RandomizedQueue.java
+!/Deque.java
+!/Permutation.java
+!/Makefile
+!/.gitignore

@@ -135,10 +135,14 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
         }
 
         public Item next() {
+            if (!this.hasNext()) throw new NoSuchElementException("No next item");
+
             return this.shuffledArr[--this.index];
         }
 
-        public void remove() { /* not supported */ }
+        public void remove() {
+            throw new UnsupportedOperationException("Remove() is not supported");
+        }
 
     }
 

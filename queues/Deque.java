@@ -186,12 +186,16 @@ public class Deque<Item> implements Iterable<Item> {
         }
 
         public Item next() {
+            if (!this.hasNext()) throw new NoSuchElementException("No next item");
+
             Item item = current.item;
             current = current.next;
             return item;
         }
 
-        public void remove() { /* not supported */ }
+        public void remove() {
+            throw new UnsupportedOperationException("Remove() is not supported");
+        }
 
     }
 

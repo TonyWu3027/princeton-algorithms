@@ -113,7 +113,7 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
 
     private class RandomizedQueueIterator implements Iterator<Item> {
 
-        private Item[] shuffledArr; // a shuffled copy of the RQ
+        private final Item[] shuffledArr; // a shuffled copy of the RQ
         private int index; // the index of the current item
 
         public RandomizedQueueIterator() {

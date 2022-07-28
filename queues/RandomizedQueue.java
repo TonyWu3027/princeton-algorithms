@@ -76,10 +76,8 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
         // retrieve the item
         Item item = this.arr[index];
 
-        // fill the blank in the array
-        for (int i = index; i < this.n-1; i++) {
-            this.arr[i] = this.arr[i+1];
-        }
+        // swap the retrieved entry with the last entry (arr[n-1])
+        this.arr[index] = this.arr[this.n-1];
 
         // decrement queue size and avoid loitering
         this.arr[--n] = null;

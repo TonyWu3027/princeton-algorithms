@@ -1,0 +1,9 @@
+# Ignore everything
+/*
+
+# Except for the project code, Makefile, and gitignore itself
+!/Point.java
+!/BruteCollinearPoints.java
+!/FastCollinearPoints.java
+!/Makefile
+!/.gitignore

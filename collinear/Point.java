@@ -2,14 +2,16 @@
  *  Compilation:  javac Point.java
  *  Execution:    java Point
  *  Dependencies: none
- *  
+ *
  *  An immutable data type for points in the plane.
  *  For use on Coursera, Algorithms Part I programming assignment.
  *
  ******************************************************************************/
 
+import java.util.Arrays;
 import java.util.Comparator;
 import edu.princeton.cs.algs4.StdDraw;
+import edu.princeton.cs.algs4.StdOut;
 
 public class Point implements Comparable<Point> {
 
@@ -59,7 +61,14 @@ public class Point implements Comparable<Point> {
      * @return the slope between this point and the specified point
      */
     public double slopeTo(Point that) {
-        /* YOUR CODE HERE */
+        if (this.y == that.y) {
+            if (this.x == that.x) return Double.NEGATIVE_INFINITY; // two points are equal
+            else return +0.0; // two points are horizontal
+        } else if (this.x == that.x) {
+            return Double.POSITIVE_INFINITY; // two points are vertical
+        } else {
+            return ((double) (that.y - this.y)) / ((double) (that.x - this.x)); // general case
+        }
     }
 
     /**
@@ -75,7 +84,12 @@ public class Point implements Comparable<Point> {
      *         argument point
      */
     public int compareTo(Point that) {
-        /* YOUR CODE HERE */
+        if (this.y == that.y) {
+            // break tie with x-coordinates
+            return this.x - that.x;
+        } else {
+            return this.y - that.y;
+        }
     }
 
     /**
@@ -85,7 +99,18 @@ public class Point implements Comparable<Point> {
      * @return the Comparator that defines this ordering on points
      */
     public Comparator<Point> slopeOrder() {
-        /* YOUR CODE HERE */
+        return new BySlope();
+    }
+
+    /**
+     * A Comparator that compares two points by the slope they make with the invoking point.
+     * Formally, the point (x1, y1) is less than the point (x2, y2)
+     * if and only if the slope (y1 − y0) / (x1 − x0) is less than the slope (y2 − y0) / (x2 − x0)
+     */
+    private class BySlope implements Comparator<Point> {
+        public int compare(Point p1, Point p2) {
+            return Double.compare(slopeTo(p1), slopeTo(p2));
+        }
     }
 
 
@@ -105,6 +130,47 @@ public class Point implements Comparable<Point> {
      * Unit tests the Point data type.
      */
     public static void main(String[] args) {
-        /* YOUR CODE HERE */
+        Point p0 = new Point(1, 1);
+        Point p1 = new Point(2, 1); // horizontal to p0
+        Point p2 = new Point(1, 3); // vertical to p0
+        Point p3 = new Point(2, 2);
+        Point p4 = new Point(4, 4);
+        Point p5 = new Point(-2, 2);
+        Point p6 = new Point(-2, -2);
+        Point p7 = new Point(1, 1); // repeated point
+        Point[] points = {p0, p1, p2, p3, p4, p5, p6, p7};
+        Point[] pointsNaturalOrder = {p6, p0, p7, p1, p5, p3, p2, p4};
+        Point[] pointsBySlope = {p7, p0, p5, p1, p6, p3, p4, p2};
+
+        StdOut.println("Testing sorting by natural order (ordering by x-coordinates, break tie by y-coordinates");
+        Arrays.sort(points);
+
+        StdOut.println("Sorted:");
+        for (Point p: points) {
+            StdOut.print(p);
+        }
+
+        StdOut.println("\nExpected:");
+        for (Point p: pointsNaturalOrder) {
+            StdOut.print(p);
+        }
+
+        StdOut.println();
+        StdOut.println("\nTesting sorting by slope");
+        StdOut.printf("Invoking point: %s\n", p0);
+        Arrays.sort(points, p0.slopeOrder());
+
+        StdOut.println("Sorted:");
+        for (Point p: points) {
+            StdOut.print(p);
+        }
+
+        StdOut.println("\nExpected:");
+        for (Point p: pointsBySlope) {
+            StdOut.print(p);
+        }
+
+
+
     }
 }

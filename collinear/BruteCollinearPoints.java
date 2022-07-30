@@ -4,6 +4,10 @@ import edu.princeton.cs.algs4.StdOut;
 
 import java.util.Arrays;
 
+/**
+ * A brute-force solution to find all line segments containing 4 points
+ * in a given array of points.
+ */
 public class BruteCollinearPoints {
 
     private int segmentCount = 0;

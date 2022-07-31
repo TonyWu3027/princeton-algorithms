@@ -15,9 +15,10 @@ public class BruteCollinearPoints {
 
     /**
      * Finds all line segments containing 4 points
+     *
      * @param points an array of points to be examined
      * @throws IllegalArgumentException if points[] is null, or any Point in points[] is null,
-     * or there is a repeated Point
+     *                                  or there is a repeated Point
      */
     public BruteCollinearPoints(Point[] points) {
         // check input is not null
@@ -41,8 +42,9 @@ public class BruteCollinearPoints {
 
         // check no repeated point
         // since points[] is sorted, equal (repeated) points will be neighbours
-        for (int i = 0; i < n-1; i++) {
-            if (pointsCopy[i].compareTo(pointsCopy[i+1]) == 0) throw new IllegalArgumentException("repeated point found");
+        for (int i = 0; i < n - 1; i++) {
+            if (pointsCopy[i].compareTo(pointsCopy[i + 1]) == 0)
+                throw new IllegalArgumentException("repeated point found");
         }
 
         this.lineSegments = new LineSegment[n];
@@ -50,12 +52,15 @@ public class BruteCollinearPoints {
         // traverse all 4-point subsets
         // form a line segment if the subset is collinear
         for (int p = 0; p < n - 3; p++) {
-            for (int q = p+1; q < n - 2; q++) {
-                for (int r = q+1; r < n - 1; r++) {
-                    if (pointsCopy[p].slopeTo(pointsCopy[q]) == pointsCopy[p].slopeTo(pointsCopy[r])) {
-                        for (int s = r+1; s < n; s++) {
-                            if (pointsCopy[p].slopeTo(pointsCopy[r]) == pointsCopy[p].slopeTo(pointsCopy[s])) {
-                                this.lineSegments[this.segmentCount++] = new LineSegment(pointsCopy[p], pointsCopy[s]);
+            for (int q = p + 1; q < n - 2; q++) {
+                for (int r = q + 1; r < n - 1; r++) {
+                    if (pointsCopy[p].slopeTo(pointsCopy[q]) == pointsCopy[p].slopeTo(
+                            pointsCopy[r])) {
+                        for (int s = r + 1; s < n; s++) {
+                            if (pointsCopy[p].slopeTo(pointsCopy[r]) == pointsCopy[p].slopeTo(
+                                    pointsCopy[s])) {
+                                this.lineSegments[this.segmentCount++] = new LineSegment(
+                                        pointsCopy[p], pointsCopy[s]);
                             }
                         }
                     }
@@ -66,6 +71,7 @@ public class BruteCollinearPoints {
 
     /**
      * The number of line segments
+     *
      * @return the number of line segments
      */
     public int numberOfSegments() {
@@ -74,6 +80,7 @@ public class BruteCollinearPoints {
 
     /**
      * The line segments
+     *
      * @return an array of the line segments
      */
     public LineSegment[] segments() {

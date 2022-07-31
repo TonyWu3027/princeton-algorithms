@@ -28,14 +28,21 @@ public class BruteCollinearPoints {
             if (p == null) throw new IllegalArgumentException("any point should not be null");
         }
 
-        // sort the array in natural order (bottom-left to top-right)
-        Arrays.sort(points);
+        // make a copy of points[]
         int n = points.length;
+        Point[] pointsCopy = new Point[n];
+
+        for (int i = 0; i < n; i++) {
+            pointsCopy[i] = points[i];
+        }
+
+        // sort the array in natural order (bottom-left to top-right)
+        Arrays.sort(pointsCopy);
 
         // check no repeated point
         // since points[] is sorted, equal (repeated) points will be neighbours
         for (int i = 0; i < n-1; i++) {
-            if (points[i].compareTo(points[i+1]) == 0) throw new IllegalArgumentException("repeated point found");
+            if (pointsCopy[i].compareTo(pointsCopy[i+1]) == 0) throw new IllegalArgumentException("repeated point found");
         }
 
         this.lineSegments = new LineSegment[n];
@@ -45,10 +52,10 @@ public class BruteCollinearPoints {
         for (int p = 0; p < n - 3; p++) {
             for (int q = p+1; q < n - 2; q++) {
                 for (int r = q+1; r < n - 1; r++) {
-                    if (points[p].slopeTo(points[q]) == points[p].slopeTo(points[r])) {
+                    if (pointsCopy[p].slopeTo(pointsCopy[q]) == pointsCopy[p].slopeTo(pointsCopy[r])) {
                         for (int s = r+1; s < n; s++) {
-                            if (points[p].slopeTo(points[r]) == points[p].slopeTo(points[s])) {
-                                this.lineSegments[this.segmentCount++] = new LineSegment(points[p], points[s]);
+                            if (pointsCopy[p].slopeTo(pointsCopy[r]) == pointsCopy[p].slopeTo(pointsCopy[s])) {
+                                this.lineSegments[this.segmentCount++] = new LineSegment(pointsCopy[p], pointsCopy[s]);
                             }
                         }
                     }
@@ -95,12 +102,16 @@ public class BruteCollinearPoints {
         StdDraw.enableDoubleBuffering();
         StdDraw.setXscale(0, 32768);
         StdDraw.setYscale(0, 32768);
+        StdDraw.setPenRadius(0.01);
+        StdDraw.setPenColor(StdDraw.RED);
         for (Point p : points) {
             p.draw();
         }
         StdDraw.show();
 
         // print and draw the line segments
+        StdDraw.setPenRadius();
+        StdDraw.setPenColor();
         BruteCollinearPoints collinear = new BruteCollinearPoints(points);
         for (LineSegment segment : collinear.segments()) {
             StdOut.println(segment);

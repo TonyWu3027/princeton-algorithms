@@ -14,12 +14,12 @@ public class KdTree {
         private RectHV rect;    // the axis-aligned rectangle corresponding to this node
         private Node lb;        // the left/bottom subtree
         private Node rt;        // the right/top subtree
+        private boolean isVertical; // whether this node is vertical or not
 
-        public Node(Point2D p, RectHV rect, Node lb, Node rt) {
+        public Node(Point2D p, RectHV rect, boolean isVertical) {
             this.p = p;
             this.rect = rect;
-            this.lb = lb;
-            this.rt = rt;
+            this.isVertical = isVertical;
         }
     }
 
@@ -56,55 +56,60 @@ public class KdTree {
 
         if (contains(p)) return;
 
-        RectHV rect = new RectHV(0, 0, 1, 1);
-
-        this.root = recursivelyInsert(this.root, p, false, rect);
+        this.root = recursivelyInsert(this.root, null, p, 0);
     }
 
     /**
      * Insert a point to the 2d tree recursively
      * @param at the current node to check
+     * @param parent the parent node to <code>at</code>
      * @param p the point to insert
-     * @param odd whether the 0-indexed number of the level in the 2d tree <code>at</code> is at is
-     *            odd or not. (E.g. <code>odd</code> is <code>false</code> when <code>at</code> is the root
-     *            but <code>true</code> for its children)
-     * @param rect the axis-aligned rectangle correspond to the node
+     * @param orientation < 0 for left/below and >=0 for right/above
      */
-    private Node recursivelyInsert(Node at, Point2D p, boolean odd, RectHV rect) {
+    private Node recursivelyInsert(Node at, Node parent, Point2D p, double orientation) {
         // Insert at the child of a leaf (null link)
         if (at == null) {
-            this.n++;
-            return new Node(p, rect, null, null);
+            // make unit square the Rect for the root
+            if (this.n++ == 0) return new Node(p, new RectHV(0, 0, 1, 1), true);
+
+            RectHV rect;
+
+            if (parent.isVertical) {
+                if (orientation < 0) {
+                    // the next rect is the left sub rect of the current rect
+                    // divided by the x co-ord
+                    rect = new RectHV(parent.rect.xmin(), parent.rect.ymin(),
+                                      parent.p.x(), parent.rect.ymax());
+                } else {
+                    // the next rect is the right sub rect of the current rect
+                    // divided by the x co-ord
+                    rect = new RectHV(parent.p.x(), parent.rect.ymin(),
+                                      parent.rect.xmax(), parent.rect.ymax());
+                }
+            } else {
+                if (orientation < 0) {
+                    // the next rect is the lower sub rect of the current rect
+                    // divided by the y co-ord
+                    rect = new RectHV(parent.rect.xmin(), parent.rect.ymin(),
+                                      parent.rect.xmax(), parent.p.y());
+                } else {
+                    // the next rect is the upper sub rect of the current rect
+                    // divided by the y co-ord
+                    rect = new RectHV(parent.rect.xmin(), parent.p.y(),
+                                      parent.rect.xmax(), parent.rect.ymax());
+                }
+            }
+
+            return new Node(p, rect, !parent.isVertical);
+
         }
 
-        RectHV nextRect;
+        double displacement = at.isVertical ? p.x() - at.p.x() : p.y() - at.p.y();
 
-        if (odd) {
-            // check y co-ord at odd level
-            if (p.y() < at.p.y()) {
-                // the next rect is the lower sub rect of the current rect
-                // divided by the y co-ord
-                nextRect = new RectHV(at.rect.xmin(), at.rect.ymin(), at.rect.xmax(), at.p.y());
-                at.lb = recursivelyInsert(at.lb, p, false, nextRect);
-            } else {
-                // the next rect is the upper sub rect of the current rect
-                // divided by the y co-ord
-                nextRect = new RectHV(at.rect.xmin(), at.p.y(), at.rect.xmax(), at.rect.ymax());
-                at.rt = recursivelyInsert(at.rt, p, false, nextRect);
-            }
+        if (displacement < 0) {
+            at.lb = recursivelyInsert(at.lb, at, p, displacement);
         } else {
-            // check x co-ord at even level
-            if (p.x() < at.p.x()) {
-                // the next rect is the left sub rect of the current rect
-                // divided by the x co-ord
-                nextRect = new RectHV(at.rect.xmin(), at.rect.ymin(), at.p.x(), at.rect.ymax());
-                at.lb = recursivelyInsert(at.lb, p, true, nextRect);
-            } else {
-                // the next rect is the right sub rect of the current rect
-                // divided by the x co-ord
-                nextRect = new RectHV(at.p.x(), at.rect.ymin(), at.rect.xmax(), at.rect.ymax());
-                at.rt = recursivelyInsert(at.rt, p, true, nextRect);
-            }
+            at.rt = recursivelyInsert(at.rt, at, p, displacement);
         }
 
         return at;
@@ -119,32 +124,27 @@ public class KdTree {
     public boolean contains(Point2D p) {
         if (p == null) throw new IllegalArgumentException("Point should not be null");
         if (this.isEmpty()) return false;
-        return recursivelyContains(this.root, p, false);
+        return recursivelyContains(this.root, p);
     }
 
     /**
      * Search a point to the 2d tree recursively
      * @param at the current node to check
      * @param p the target point
-     * @param odd whether the 0-indexed number of the level in the 2d tree <code>at</code> is at is
-     *            odd or not. (E.g. <code>odd</code> is <code>false</code> when <code>at</code> is the root
-     *            but <code>true</code> for its children)
      * @return true if <code>p</code> exists in the 2d tree, vice versa
      */
-    private boolean recursivelyContains(Node at, Point2D p, boolean odd) {
+    private boolean recursivelyContains(Node at, Point2D p) {
         // p does not exist when nodes are run out
         if (at == null) return false;
 
         if (at.p.equals(p)) return true;
 
-        if (odd) {
-            // check y co-ord at odd level
-            if (p.y() < at.p.y()) return recursivelyContains(at.lb, p, false);
-            else return recursivelyContains(at.rt, p, false);
+        if (at.isVertical) {
+            if (p.x() < at.p.x()) return recursivelyContains(at.lb, p);
+            else return recursivelyContains(at.rt, p);
         } else {
-            // check x co-ord at even level
-            if (p.x() < at.p.x()) return recursivelyContains(at.lb, p, true);
-            else return recursivelyContains(at.rt, p, true);
+            if (p.y() < at.p.y()) return recursivelyContains(at.lb, p);
+            else return recursivelyContains(at.rt, p);
         }
     }
 
@@ -152,17 +152,14 @@ public class KdTree {
      * Draw all points to standard draw
      */
     public void draw() {
-        recursivelyDraw(this.root, false);
+        recursivelyDraw(this.root);
     }
 
     /**
      * Draw all points and their subdivisions in a 2d tree inorder recursively
      * @param at the current node to check
-     * @param odd whether the 0-indexed number of the level in the 2d tree <code>at</code> is at is
-     *            odd or not. (E.g. <code>odd</code> is <code>false</code> when <code>at</code> is the root
-     *            but <code>true</code> for its children)
      */
-    private void recursivelyDraw(Node at, boolean odd) {
+    private void recursivelyDraw(Node at) {
         if (at == null) return;
 
         double x = at.p.x();
@@ -176,18 +173,18 @@ public class KdTree {
         // draw the splits
         // red for vertical splits and blue for horizontal splits
         StdDraw.setPenRadius(0.005);
-        if (odd) {
-            StdDraw.setPenColor(StdDraw.BLUE);
-            StdDraw.line(at.rect.xmin(), y, at.rect.xmax(), y);
-        } else {
+        if (at.isVertical) {
             StdDraw.setPenColor(StdDraw.RED);
             StdDraw.line(x, at.rect.ymin(), x, at.rect.ymax());
+        } else {
+            StdDraw.setPenColor(StdDraw.BLUE);
+            StdDraw.line(at.rect.xmin(), y, at.rect.xmax(), y);
         }
 
         // draw left subtree
-        recursivelyDraw(at.lb, !odd);
+        recursivelyDraw(at.lb);
         // draw right subtree
-        recursivelyDraw(at.rt, !odd);
+        recursivelyDraw(at.rt);
     }
 
     /**

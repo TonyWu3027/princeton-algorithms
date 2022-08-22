@@ -214,6 +214,8 @@ public class KdTree {
      * @param inside a stack of such points
      */
     private void recursivelyRange(Node at, RectHV query, Stack<Point2D> inside) {
+        if (at == null) return;
+
         // if the corresponding rect at the node does not intersect the query rect,
         // there is no need to explore that node and its subtree
         if (!at.rect.intersects(query)) return;
@@ -280,6 +282,8 @@ public class KdTree {
     // unit testing of the methods (optional)
     public static void main(String[] args) {
         KdTree tree = new KdTree();
-        tree.insert(new Point2D(0.5, 0.5));
+        // test range() for empty tree
+        RectHV rect = new RectHV(0, 0, 1, 1);
+        tree.range(rect);
     }
 }

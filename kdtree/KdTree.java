@@ -248,7 +248,7 @@ public class KdTree {
         // if the closest point discovered so far is closer than the distance between
         // the query point and the rectangle corresponding to a node,
         // there is no need to explore that node and its subtree
-        if (query.distanceSquaredTo(closest.p) < at.rect.distanceSquaredTo(query)) return closest;
+        if (query.distanceSquaredTo(closest.p) <= at.rect.distanceSquaredTo(query)) return closest;
 
         // update closest if current node is closer
         if (query.distanceSquaredTo(at.p) < query.distanceSquaredTo(closest.p)) closest = at;
@@ -261,14 +261,13 @@ public class KdTree {
             else if (at.rt == null) return recursivelyNearest(at.lb, closest, query);
             // if both subtrees exist
             else {
-                // query left subtree first if query is on the same side (contained by left's rect)
-                if (at.lb.rect.contains(query)) {
+                if (at.lb.rect.distanceSquaredTo(query) < at.rt.rect.distanceSquaredTo(query)) {
+                    // query left subtree first if query is on the same side (contained by left's rect)
                     Node nextClosest = recursivelyNearest(at.lb, closest, query);
                     return recursivelyNearest(at.rt, nextClosest, query);
-                }
-                // else (if query is on the right child's side or sitting on the boundary)
-                // query right subtree first
-                else {
+                } else {
+                    // else (if query is on the right child's side or sitting on the boundary)
+                    // query right subtree first
                     Node nextClosest = recursivelyNearest(at.rt, closest, query);
                     return recursivelyNearest(at.lb, nextClosest, query);
                 }

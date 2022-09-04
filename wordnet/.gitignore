@@ -1,0 +1,11 @@
+# Ignore everything
+/*
+
+# Except for the project code, Makefile, and gitignore itself
+!/WordNet.java
+!/SAP.java
+!/Outcast.java
+!/Makefile
+!/.gitignore
+!/logo.png
+!/README.md

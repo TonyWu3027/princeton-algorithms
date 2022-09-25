@@ -58,6 +58,9 @@ public class SAP {
         this.validate(v);
         this.validate(w);
 
+        // no such path if either iterable is empty
+        if (this.isEmpty(v) || this.isEmpty(w)) return -1;
+
         BreadthFirstDirectedPaths vBFS = new BreadthFirstDirectedPaths(this.G, v);
         BreadthFirstDirectedPaths wBFS = new BreadthFirstDirectedPaths(this.G, w);
 
@@ -118,6 +121,9 @@ public class SAP {
         this.validate(v);
         this.validate(w);
 
+        // no such path if either iterable is empty
+        if (this.isEmpty(v) || this.isEmpty(w)) return -1;
+
         BreadthFirstDirectedPaths vBFS = new BreadthFirstDirectedPaths(this.G, v);
         BreadthFirstDirectedPaths wBFS = new BreadthFirstDirectedPaths(this.G, w);
 
@@ -171,14 +177,20 @@ public class SAP {
     private void validate(Iterable<Integer> vertices) {
         if (vertices == null) throw new IllegalArgumentException("Vertices iterable is null");
 
-        // check for emptiness
-        if (!vertices.iterator().hasNext())
-            throw new IllegalArgumentException("Vertices iterable is empty");
-
         // check each vertex
         for (Integer vertex : vertices) {
             validate(vertex);
         }
+    }
+
+    /**
+     * Is an {@code Iterable} empty?
+     *
+     * @param i an iterable
+     * @return true if empty; vice versa
+     */
+    private boolean isEmpty(Iterable<Integer> i) {
+        return !i.iterator().hasNext();
     }
 
     // do unit testing of this class

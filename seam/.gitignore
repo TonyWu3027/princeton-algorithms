@@ -1,0 +1,8 @@
+# Ignore everything
+/*
+
+# Except for the project code, Makefile, and gitignore itself
+!/SeamCarver.java
+!/Makefile
+!/.gitignore
+!/logo.png
